@@ -11,7 +11,6 @@
 #define MEMORY_SIZE 8192
 #define MAX_FILES 16
 
-// Структура інструкції Atom (Буква + модифікатор + підмодифікатор для H9(n))
 typedef struct {
     char cmd;          // A - Z
     int arg;           // Числовий модифікатор (напр., 3 у H3 або B1)
@@ -19,7 +18,6 @@ typedef struct {
     bool has_arg;
 } AtomInstruction;
 
-// Структура лінкування та віртуального контейнера .mh
 typedef struct {
     char container_name[64];
     int sector_mapping;
@@ -29,14 +27,12 @@ typedef struct {
     int raw_bytes_count;
 } MhContainer;
 
-// Віртуальна файлова система для команд F1-F4
 typedef struct {
     char name[64];
     FILE *fp;
     bool active;
 } VirtualFile;
 
-// Віртуальна машина Atom (Повний контекст виконання)
 typedef struct {
     long stack[STACK_SIZE];
     int sp;                            // Stack pointer
@@ -88,7 +84,6 @@ long pop(AtomVM *vm) {
     }
 }
 
-// Повноцінний парсер .mh контейнерів та .atm коду
 bool parse_atom_system(const char *filename) {
     FILE *file = fopen(filename, "r");
     if (!file) {
@@ -136,7 +131,6 @@ bool parse_atom_system(const char *filename) {
             continue;
         }
 
-        // 2. Парсинг команд А-Z та числових модифікаторів
         while (*ptr) {
             while (*ptr && (isspace((unsigned char)*ptr) || *ptr == '\r' || *ptr == '\n')) ptr++;
             if (!*ptr) break;
@@ -169,7 +163,6 @@ bool parse_atom_system(const char *filename) {
                     has_arg = true;
                 }
 
-                // Перевірка на складені модифікатори типу H9(n)
                 if (cmd == 'H' && arg == 9 && *ptr == '(') {
                     ptr++;
                     sub_arg = atoi(ptr);
@@ -190,7 +183,6 @@ bool parse_atom_system(const char *filename) {
     return true;
 }
 
-// Головний рушій виконання команд A-Z
 void vm_execute(AtomVM *vm) {
     int pc = 0;
     while (pc < program_length && vm->running) {
@@ -226,7 +218,7 @@ void vm_execute(AtomVM *vm) {
                 }
                 break;
 
-            case 'C': // Compare: Порівняння двох елементів стека
+            case 'C':
                 {
                     long b = pop(vm);
                     long a = pop(vm);
@@ -234,11 +226,11 @@ void vm_execute(AtomVM *vm) {
                 }
                 break;
 
-            case 'D': // Data: Завантаження числа на стек
+            case 'D':
                 push(vm, inst.arg);
                 break;
 
-            case 'E': // Execute: Динамічне виконання за адресою зі стека
+            case 'E':
                 {
                     long target_pc = pop(vm);
                     if (target_pc >= 0 && target_pc < program_length) {
@@ -247,8 +239,8 @@ void vm_execute(AtomVM *vm) {
                 }
                 break;
 
-            case 'F': // File system (F1-F4)
-                if (inst.arg == 1) { // F1: Відкрити файл (адреса імені у пам'яті -> дескриптор)
+            case 'F': 
+                if (inst.arg == 1) { 
                     long name_addr = pop(vm);
                     char *filename = (char*)&vm->memory[name_addr];
                     int fd = -1;
@@ -290,7 +282,7 @@ void vm_execute(AtomVM *vm) {
                 push(vm, 0); // Повертає базовий стан апаратного порту
                 break;
 
-            case 'H': // Hardware / HAL (H1 - H9)
+            case 'H': 
                 if (inst.arg == 1) printf("[HAL H1] SATA Controller active. Sector mapped.\n");
                 else if (inst.arg == 2) printf("[HAL H2] COM-port (UART) transmitting stream.\n");
                 else if (inst.arg == 3) printf("[HAL H3] USB 1.1-3.1 Controller initialized on bare-metal.\n");
@@ -307,7 +299,7 @@ void vm_execute(AtomVM *vm) {
                 }
                 break;
 
-            case 'I': // Input (I1-I3)
+            case 'I': 
                 if (inst.arg == 1) {
                     long val;
                     scanf("%ld", &val);
@@ -320,20 +312,20 @@ void vm_execute(AtomVM *vm) {
                 }
                 break;
 
-            case 'J': // Jump: Беззумовний перехід (goto за міткою або індексом)
+            case 'J': 
                 if (inst.has_arg) {
                     pc = inst.arg - 1;
                 }
                 break;
 
-            case 'K': // Kernel: Виклик системної функції мікро-ОС
+            case 'K': 
                 printf("[KERNEL INTERRUPT] Micro-OS core function called.\n");
                 break;
 
-            case 'L': // Loop (L1 - початок, L2 - кінець)
+            case 'L':
                 break;
 
-            case 'M': // Memory: Читання/запис за конкретною адресою ОЗП
+            case 'M':
                 {
                     long addr = pop(vm);
                     if (addr >= 0 && addr < MEMORY_SIZE) {
@@ -343,37 +335,37 @@ void vm_execute(AtomVM *vm) {
                 }
                 break;
 
-            case 'N': // Next: Інкремент вершини стека
+            case 'N': 
                 if (vm->sp >= 0) {
                     vm->stack[vm->sp]++;
                 }
                 break;
 
-            case 'O': // Output: Універсальний вивід на екран
+            case 'O': 
                 if (vm->sp >= 0) {
                     printf("[ATOM OUTPUT] %ld\n", vm->stack[vm->sp]);
                 }
                 break;
 
-            case 'P': // Push/Pop / Duplicate (DUP)
+            case 'P': 
                 if (vm->sp >= 0) {
-                    push(vm, vm->stack[vm->sp]); // Дублювання вершини стека
+                    push(vm, vm->stack[vm->sp]);
                 }
                 break;
 
-            case 'Q': // Quit: Завершення сесії виконання
+            case 'Q': 
                 vm->running = false;
                 printf("[SYS] Atom execution terminated securely.\n");
                 break;
 
-            case 'R': // Register: Операції з реєстрами
+            case 'R': 
                 vm->r7 = (uint8_t)pop(vm);
                 break;
 
-            case 'S': // Setup / Store
+            case 'S': 
                 break;
 
-            case 'T': // Transform (Арифметика T1-T4)
+            case 'T': 
                 if (inst.arg == 1) { // Додавання
                     long b = pop(vm); long a = pop(vm);
                     push(vm, a + b);
@@ -389,21 +381,21 @@ void vm_execute(AtomVM *vm) {
                 }
                 break;
 
-            case 'U': // Unpack / Pack (U1, U2)
+            case 'U': 
                 if (inst.arg == 1) {
-                    // Упаковка байтів зі стека у слово
+            
                 } else if (inst.arg == 2) {
-                    // Розпаковка слова на байти
+                
                 }
                 break;
 
-            case 'V': // Vector: Вектори переривань
+            case 'V':
                 break;
 
-            case 'W': // Wait: Затримка / очікування такту
+            case 'W': 
                 break;
 
-            case 'X': // XOR / Logic (X1-X3)
+            case 'X':
                 if (inst.arg == 1) { // AND
                     long b = pop(vm); long a = pop(vm);
                     push(vm, a & b);
@@ -416,10 +408,10 @@ void vm_execute(AtomVM *vm) {
                 }
                 break;
 
-            case 'Y': // Yield: Передача кванту процесора
+            case 'Y': 
                 break;
 
-            case 'Z': // Zero: Миттєве обнулення стека
+            case 'Z': 
                 vm->sp = -1;
                 break;
 
