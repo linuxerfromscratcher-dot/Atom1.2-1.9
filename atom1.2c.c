@@ -13,8 +13,8 @@
 
 typedef struct {
     char cmd;          // A - Z
-    int arg;           // Числовий модифікатор (напр., 3 у H3 або B1)
-    int sub_arg;       // Длякласних легасі портів на кшталт H9(2)
+    int arg;         
+    int sub_arg;      
     bool has_arg;
 } AtomInstruction;
 
@@ -36,12 +36,12 @@ typedef struct {
 typedef struct {
     long stack[STACK_SIZE];
     int sp;                            // Stack pointer
-    unsigned char memory[MEMORY_SIZE]; // Системна пам'ять / купа
-    uint8_t r7;                        // Апаратний регістр для I3
-    VirtualFile files[MAX_FILES];      // Дескриптори файлів
-    long heap_pointer;                 // Вказівник для виділення пам'яті через A
+    unsigned char memory[MEMORY_SIZE]; 
+    uint8_t r7;                       
+    VirtualFile files[MAX_FILES];     
+    long heap_pointer;                
     bool running;
-    bool condition_flag[16];           // Стековий індикатор умов (B1-B4)
+    bool condition_flag[16];          
     int cond_sp;
 } AtomVM;
 
@@ -53,7 +53,7 @@ void vm_init(AtomVM *vm) {
     vm->sp = -1;
     vm->r7 = 0;
     vm->running = true;
-    vm->heap_pointer = 0x1000; // Початок купи в пам'яті
+    vm->heap_pointer = 0x1000; 
     vm->cond_sp = 0;
     memset(vm->stack, 0, sizeof(vm->stack));
     memset(vm->memory, 0, sizeof(vm->memory));
@@ -135,7 +135,7 @@ bool parse_atom_system(const char *filename) {
             while (*ptr && (isspace((unsigned char)*ptr) || *ptr == '\r' || *ptr == '\n')) ptr++;
             if (!*ptr) break;
 
-            // Пропуск міток типу "10:"
+            
             if (isdigit((unsigned char)*ptr)) {
                 while (*ptr && *ptr != ':') ptr++;
                 if (*ptr == ':') ptr++;
@@ -203,8 +203,8 @@ void vm_execute(AtomVM *vm) {
                 }
                 break;
 
-            case 'B': // Branch / Умови (B1-B4)
-                if (inst.arg == 1) { // B1: Початок умови (if)
+            case 'B': 
+                if (inst.arg == 1) { 
                     long condition = pop(vm);
                     vm->condition_flag[++vm->cond_sp] = (condition != 0);
                 } else if (inst.arg == 2) { // B2: Else
@@ -214,7 +214,7 @@ void vm_execute(AtomVM *vm) {
                 } else if (inst.arg == 3) { // B3: End if
                     if (vm->cond_sp > 0) vm->cond_sp--;
                 } else if (inst.arg == 4) { // B4: Elseif
-                    // Перемикання альтернативної перевірки потоку
+                    
                 }
                 break;
 
@@ -278,8 +278,8 @@ void vm_execute(AtomVM *vm) {
                 }
                 break;
 
-            case 'G': // Get: Зчитати з апаратного порту
-                push(vm, 0); // Повертає базовий стан апаратного порту
+            case 'G': 
+                push(vm, 0); 
                 break;
 
             case 'H': 
@@ -305,10 +305,10 @@ void vm_execute(AtomVM *vm) {
                     scanf("%ld", &val);
                     push(vm, val);
                 } else if (inst.arg == 2) {
-                    // Запис у фіксовану адресу ОЗП 2
+                  
                     vm->memory[2] = (unsigned char)pop(vm);
                 } else if (inst.arg == 3) {
-                    push(vm, vm->r7); // Зчитати в апаратний регістр R7
+                    push(vm, vm->r7); 
                 }
                 break;
 
@@ -366,16 +366,16 @@ void vm_execute(AtomVM *vm) {
                 break;
 
             case 'T': 
-                if (inst.arg == 1) { // Додавання
+                if (inst.arg == 1) { 
                     long b = pop(vm); long a = pop(vm);
                     push(vm, a + b);
-                } else if (inst.arg == 2) { // Віднімання
+                } else if (inst.arg == 2) { 
                     long b = pop(vm); long a = pop(vm);
                     push(vm, a - b);
-                } else if (inst.arg == 3) { // Множення
+                } else if (inst.arg == 3) { 
                     long b = pop(vm); long a = pop(vm);
                     push(vm, a * b);
-                } else if (inst.arg == 4) { // Ділення
+                } else if (inst.arg == 4) { 
                     long b = pop(vm); long a = pop(vm);
                     push(vm, b != 0 ? a / b : 0);
                 }
