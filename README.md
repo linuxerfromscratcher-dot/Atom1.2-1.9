@@ -5,7 +5,7 @@ still the main goal of self hosting isn't done fully, but i try!
 Here are my plans:
 first concept(1.0)-1.999(last stess testing and compiling, basically last breath till official, stable release) then i will publish first, stable release. 
 After getting into a team, we could do better peformance, so that the project will get more chances to work clockwise
-GIANT THANKS TO EBLANROSE!
+GIANT THANKS TO EBLANROSE!!!
 Here is the manual:
 # Technical Specification and Documentation for the Atom Programming Language (v1.2)
 
