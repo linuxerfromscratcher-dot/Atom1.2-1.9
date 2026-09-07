@@ -26,7 +26,7 @@ contains
  
    open(unit=file_unit, file=trim(f_filename), status='old', action='read', iostat=io_status)
    
-   if(io_status /= 0) then !если файл не замечен или каки�е� то обстоятельства
+   if(io_status /= 0) then !ÐµÑÐ»Ð¸ Ñ„Ð°Ð¹Ð» Ð½Ðµ Ð·Ð°Ð¼ÐµÑ‡ÐµÐ½ Ð¸Ð»Ð¸ ÐºÐ°ÐºÐ¸ÐÐµÑ Ñ‚Ð¾ Ð¾Ð±ÑÑ‚Ð¾ÑÑ‚ÐµÐ»ÑŒÑÑ‚Ð²Ð°
       print*,"[FORTRAN ERROR]:could not open file. Or it doesn't exist, or i don't know"
       return
    end if
