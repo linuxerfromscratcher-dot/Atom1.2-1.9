@@ -1,9 +1,9 @@
 # Atom1.2-PL
 you may think finally, but who actually cares?
 So uhh, we added support of come ports(USB, Com,VGA,SATA,RJ-45,audio jack and some legacy Rj ports). I don't remember, if that was in 1.1, but was added packing and unpacking of data. We added a new technology, an .mh files, basically it means memory headers, you can write out some data and Atom code in a file, Hdd/SSD sector, RAM adress.
-still the main goal of self hosting isn't done fully, but i try!
-Here are my plans:
-first concept(1.0)-1.999(last stess testing and compiling, basically last breath till official, stable release) then i will publish first, stable release. 
+still the main goal of self hosting isn't done fully, but we try!
+Here are our plans:
+first concept(1.0)-1.999(last stess testing and compiling, basically last breath till official, stable release) then we will publish first, stable release. 
 After getting into a team, we could do better peformance, so that the project will get more chances to work clockwise
 GIANT THANKS TO EBLANROSE!!!
 Here is the manual:
