@@ -1,2 +1,4 @@
 *.mh
 a.out
+
+build/
