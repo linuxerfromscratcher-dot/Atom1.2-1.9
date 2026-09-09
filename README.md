@@ -7,6 +7,7 @@
 > where comment in code?
 
 ## i hate comments a bit.
+### comment from linuxerfromscratcher-dot: this look of atom isn't bad too, as long as this doesn't become a babylon tower of specific files, which can be destroyed by one typo and destroy moods of people. 
 
 # Technical Specification and Documentation for the Atom Programming Language (v1.2-atomicfish)
 
