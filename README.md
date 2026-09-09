@@ -6,6 +6,9 @@ Here are our plans:
 first concept(1.0)-1.999(last stess testing and compiling, basically last breath till official, stable release) then we will publish first, stable release. 
 After getting into a team, we could do better peformance, so that the project will get more chances to work clockwise
 GIANT THANKS TO EBLANROSE!!!
+
+> thanks :) - eblanrose
+
 Here is the manual:
 # Technical Specification and Documentation for the Atom Programming Language (v1.2)
 
