@@ -1,13 +1,14 @@
-# Atom1.2-PL
-you may think finally, but who actually cares?
-So uhh, we added support of come ports(USB, Com,VGA,SATA,RJ-45,audio jack and some legacy Rj ports). I don't remember, if that was in 1.1, but was added packing and unpacking of data. We added a new technology, an .mh files, basically it means memory headers, you can write out some data and Atom code in a file, Hdd/SSD sector, RAM adress.
-still the main goal of self hosting isn't done fully, but we try!
-Here are our plans:
-first concept(1.0)-1.999(last stess testing and compiling, basically last breath till official, stable release) then we will publish first, stable release. 
-After getting into a team, we could do better peformance, so that the project will get more chances to work clockwise
-GIANT THANKS TO EBLANROSE!!!
-Here is the manual:
-# Technical Specification and Documentation for the Atom Programming Language (v1.2)
+# Its unstabe branch by eblanrose/notafishatall! please DO NOT COMMIT IN!
+
+> why?
+
+## bc i wanna share my view point about atom
+
+> where comment in code?
+
+## i hate comments a bit.
+
+# Technical Specification and Documentation for the Atom Programming Language (v1.2-atomicfish)
 
 This document is a basic guide and architectural specification for the **Atom** programming language — an ultra-minimalist low-level programming language designed to operate as part of a custom micro-OS. Its architecture combines the principles of a linear execution pipeline and stack-based data processing (in the spirit of Forth concepts), aiming to provide maximum execution speed and minimal hardware resource requirements.
 
