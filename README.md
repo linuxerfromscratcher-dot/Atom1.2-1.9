@@ -1,4 +1,5 @@
 # Atom1.2-PL
+ATTENTION!!! YOU NEED TO GO TO fishatom BRANCH, THIS ONE IS OUTDATED.
 you may think finally, but who actually cares?
 So uhh, we added support of come ports(USB, Com,VGA,SATA,RJ-45,audio jack and some legacy Rj ports). I don't remember, if that was in 1.1, but was added packing and unpacking of data. We added a new technology, an .mh files, basically it means memory headers, you can write out some data and Atom code in a file, Hdd/SSD sector, RAM adress.
 still the main goal of self hosting isn't done fully, but i try!
