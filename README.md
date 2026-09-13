@@ -8,13 +8,17 @@ first concept(1.0)-1.999(last stess testing and compiling, basically last breath
 After getting into a team, we could do better peformance, so that the project will get more chances to work clockwise
 GIANT THANKS TO EBLANROSE!!!
 Here is the manual:
-Technical Specification and Documentation of the Atom Programming Language (v1.3)
+
+##Technical Specification and Documentation of the Atom Programming Language (v1.3)##
+
 This document serves as the foundational guide and architectural specification for the Atom programming language—an ultra-minimalist low-level language designed to operate within a custom micro-OS. The architecture combines the principles of a linear pipeline and stack-based data processing (in the spirit of Forth concepts), ensuring maximum execution speed, human-readable mnemonics, and minimal hardware resource requirements.
+
 1. How the Language Works
 The Atom language is built on the concept of a single data stack and linear sequential instruction execution.
 Stack Model: All operands and calculation results pass through a global data stack. A command can take values from the stack, perform an operation on them, and push the result back.
 Linear Pipeline: The program executes instruction by instruction from left to right without complex tree-like nestings or syntactic structures like curly braces or semicolons.
 Dual-Layer Execution: Each instruction maps from a clear human-readable mnemonic down to a single Latin letter code (from A to Z), ensuring instant parsing and direct execution on raw hardware.
+
 2. Its Commands (Alphabet from A to Z with Mnemonics)
 The complete alphabet of the language contains 26 basic instructions, each responsible for a specific low-level operation:
 A / ALLOC (Allocate): Allocates a block of dynamic memory in RAM (heap). Takes the size from the stack and returns the address of the allocated buffer.
@@ -83,6 +87,7 @@ ADDR {address} (Adaptive address block with annulment): Defines the target addre
 Hexadecimal bytecode (0x...): Direct injection of raw machine code transferred by the linker directly into the final .atmo or .rom binary files byte-for-byte.
 Isolated stack context: Each separate section in the mapping file possesses its own independent set of stack data, ensuring complete subsystem autonomy.
 Assembly or any else programming language: you can write code on any other programming language, as long as you have a compiler/intepreter/transpiler in your system(please set configuration in atom.config, if not, the idle compiler will be GCC)
+
 4. How to Work with Them
 The programming process in Atom is based on the principle of data transfer via the stack.
 Data loading: First, the required numbers or variables are placed onto the stack using the LOAD (D) command or read via INPUT_* (I1–I3).
@@ -93,6 +98,7 @@ Command LOAD 10 (D10) places the number 10 on the stack.
 Command LOAD 2 (D2) places the number 2 on the stack.
 The next command, ADD (T1), takes 10 and 2, adds them, and pushes the result back onto the stack.
 Command WRITE (O) takes 12 and outputs it to the screen.
+
 5. Syntax Proper
 The syntax of the Atom language is maximally simplified to avoid unnecessary characters:
 Command format: A capital mnemonic word or a capital Latin letter (from A to Z) plus an optional numeric argument with no spaces between them (e.g., LOAD 42, D42, MEM 100, M100, WAIT 5, W5).
