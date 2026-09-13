@@ -8,7 +8,6 @@ first concept(1.0)-1.999(last stess testing and compiling, basically last breath
 After getting into a team, we could do better peformance, so that the project will get more chances to work clockwise
 GIANT THANKS TO EBLANROSE!!!
 Here is the manual:
-# Technical Specification and Documentation for the Atom Programming Language (v1.2)
 
 This document is a basic guide and architectural specification for the **Atom** programming language — an ultra-minimalist low-level programming language designed to operate as part of a custom micro-OS. Its architecture combines the principles of a linear execution pipeline and stack-based data processing (in the spirit of Forth concepts), aiming to provide maximum execution speed and minimal hardware resource requirements.
 
