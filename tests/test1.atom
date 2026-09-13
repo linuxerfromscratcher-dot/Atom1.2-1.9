@@ -1,0 +1,2 @@
+D24 D13 C   O       ; (0) Prints whether the numbers are equal or not
+D5  D5  C   O       ; (1)
