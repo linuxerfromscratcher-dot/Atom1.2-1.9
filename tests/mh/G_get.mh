@@ -1,0 +1,4 @@
+// G (Get) test: read from hardware ports
+G96 O    // port 0x60 -> 0x1F = 31
+G0 O     // default port 0 -> 0
+Q

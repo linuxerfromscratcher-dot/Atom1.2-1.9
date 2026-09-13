@@ -1,0 +1,5 @@
+// import test: main imports fixtures/lib.mh which imports fixtures/base.mh
+import "fixtures/lib.mh"
+T1    // 4 + 5 = 9
+O
+Q

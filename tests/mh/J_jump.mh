@@ -1,0 +1,9 @@
+// J (Jump) test: unconditional jump skips an instruction
+D1
+D2
+J5
+D99      // skipped
+D3
+O        // 3
+O        // 2
+Q

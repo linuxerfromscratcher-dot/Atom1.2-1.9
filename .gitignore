@@ -1,0 +1,10 @@
+*.mh
+!tests/mh/*.mh
+!tests/mh/**/*.mh
+a.out
+
+build/
+dist/
+.atom_cache/
+.atom_cache*
+libatom_fortran.so

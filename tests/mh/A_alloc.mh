@@ -1,0 +1,5 @@
+// A (Allocate) test
+D3
+A      // returns heap_pointer = 0x1000 = 4096
+O
+Q

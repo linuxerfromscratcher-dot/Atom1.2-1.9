@@ -1,0 +1,4 @@
+// C (Compare) test
+D5 D5 C O   // 5 == 5 -> 1
+D5 D6 C O   // 5 == 6 -> 0
+Q

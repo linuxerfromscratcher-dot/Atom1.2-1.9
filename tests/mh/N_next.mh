@@ -1,0 +1,5 @@
+// N (Next) test: increment top of stack
+D5
+N
+O
+Q

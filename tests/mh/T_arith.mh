@@ -1,0 +1,8 @@
+// T (Arithmetic) test: T1+ T2- T3* T4/
+D10 D20 T1 O   // 30
+D10 D20 T2 O   // -10
+D4 D5 T3 O     // 20
+D10 D2 T4 O    // 5
+D10 D0 T4      // division by zero -> error, 0
+O
+Q

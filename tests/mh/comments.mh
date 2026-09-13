@@ -1,0 +1,9 @@
+// comment test: C-like comments during real execution
+D100  /* inline comment */
+/* multi-line
+   block comment
+   goes here */
+D2
+T1    ; classic semicolon comment
+O   // 102
+Q

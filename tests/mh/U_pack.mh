@@ -1,0 +1,6 @@
+// U (Pack/Unpack) test
+D10 D20 U1 O   // (10<<16)|20 = 655380
+D655380 U2
+O              // low part: 20
+O              // high part: 10
+Q

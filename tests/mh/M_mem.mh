@@ -1,0 +1,6 @@
+// M (Memory) test: write and read back
+D7
+M16     // write 7 to memory[16]
+D16 M   // read memory[16]
+O
+Q

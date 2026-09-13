@@ -1,0 +1,8 @@
+// S (Setup/Store) test
+S1
+D5
+D6
+D100
+S2
+O    // addr pushed back = 100
+Q
