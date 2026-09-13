@@ -1,34 +1,24 @@
-CC = gcc
-FC = gfortran
-
-CFLAGS = -Wall -Wextra -O2
-FFLAGS = -Wall -O2
+CXX = g++
+CXXFLAGS = -Wall -Wextra -O2
 
 TARGET = dist/atomc
 
-C_SRCS = $(wildcard src/*.c)
-F_SRCS = $(wildcard src/*.f90)
-
-C_OBJS = $(C_SRCS:src/%.c=build/%.o)
-F_OBJS = $(F_SRCS:src/%.f90=build/%.o)
-
-OBJS = $(C_OBJS) $(F_OBJS)
+CXX_SRCS = $(wildcard src/*.cpp)
+CXX_OBJS = $(CXX_SRCS:src/%.cpp=build/%.o)
 
 all: $(TARGET)
+
 build: $(TARGET)
 
-$(TARGET): $(OBJS)
-	$(FC) $(OBJS) -o $@
+$(TARGET): $(CXX_OBJS)
+	@mkdir -p dist
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
-build/%.o: src/%.c
-	@mkdir -p build dist
-	$(CC) $(CFLAGS) -c $< -o $@
-
-build/%.o: src/%.f90
-	@mkdir -p build dist
-	$(FC) $(FFLAGS) -c $< -o $@
+build/%.o: src/%.cpp
+	@mkdir -p build
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -rf build/ dist/
 
-.PHONY: all clean
+.PHONY: all build clean
