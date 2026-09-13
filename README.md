@@ -9,7 +9,7 @@ After getting into a team, we could do better peformance, so that the project wi
 GIANT THANKS TO EBLANROSE!!!
 Here is the manual:
 
-#Technical Specification and Documentation of the Atom Programming Language (v1.3)
+Technical Specification and Documentation of the Atom Programming Language (v1.3)
 
 This document serves as the foundational guide and architectural specification for the Atom programming language—an ultra-minimalist low-level language designed to operate within a custom micro-OS. The architecture combines the principles of a linear pipeline and stack-based data processing (in the spirit of Forth concepts), ensuring maximum execution speed, human-readable mnemonics, and minimal hardware resource requirements.
 
