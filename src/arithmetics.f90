@@ -27,12 +27,12 @@ contains
       i = i + 1
   end do
  
-   open(unit=file_unit, file=trim(f_filename), status='old', action='read', iostat=io_status)
+   open(unit=file_unit, file=trim(f_filename), status='old', action='read', iostat=io_status) !read the file.
 
    print*,"[FORTRAN MODULE ACTIVATED]"
   
-   if(io_status /= 0) then !ÐµÑÐ»Ð¸ Ñ„Ð°Ð¹Ð» Ð½Ðµ Ð·Ð°Ð¼ÐµÑ‡ÐµÐ½ Ð¸Ð»Ð¸ ÐºÐ°ÐºÐ¸ÐÐµÑ Ñ‚Ð¾ Ð¾Ð±ÑÑ‚Ð¾ÑÑ‚ÐµÐ»ÑŒÑÑ‚Ð²Ð°
-      print*,"[FORTRAN ERROR]:could not open file. Or it doesn't exist, or i don't know"
+   if(io_status /= 0) then !if the file was not read.
+      print*,"[FORTRAN ERROR]:could not open file. Or it doesn't exist, or a typo."
       return
    end if
 
@@ -41,7 +41,7 @@ contains
       if(io_status < 0) exit
       if(io_status > 0) cycle
       
-      select case(cmd)
+      select case(cmd)!here are the arythmetics started
       case ("T1")
           res = a + b
           print*,"the result is", res
@@ -56,7 +56,7 @@ contains
              res = a / b
              print*,"the result is", res 
           else
-             print*,"[FORTRAN ERROR]: div by zero!"
+             print*,"[FORTRAN ERROR]: div by zero!"! i know that someone would want to crash it.
           end if
       end select
     end do
