@@ -1,3 +1,6 @@
+!FORTAN arythmetics module
+!must to work.
+!(C) Yaroslav Kosach/linuxerfromscratcher
 module arythmetics
   use iso_c_binding
   implicit none
