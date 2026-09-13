@@ -1,14 +1,3 @@
-# Its unstabe branch by eblanrose/notafishatall! please DO NOT COMMIT IN!
-
-> why?
-
-## bc i wanna share my view point about atom
-
-> where comment in code?
-
-## i hate comments a bit.
-### comment from linuxerfromscratcher-dot: this look of atom isn't bad too, as long as this doesn't become a babylon tower of specific files, which can be destroyed by one typo and destroy moods of people. 
-
 # Technical Specification and Documentation for the Atom Programming Language (v1.2-atomicfish)
 
 This document is a basic guide and architectural specification for the **Atom** programming language — an ultra-minimalist low-level programming language designed to operate as part of a custom micro-OS. Its architecture combines the principles of a linear execution pipeline and stack-based data processing (in the spirit of Forth concepts), aiming to provide maximum execution speed and minimal hardware resource requirements.
