@@ -29,6 +29,6 @@ build/%.o: src/%.f90
 	$(FC) $(FFLAGS) -c $< -o $@
 
 clean:
-	rm -rf build $(TARGET)
+	rm -rf build/ dist/
 
 .PHONY: all clean
