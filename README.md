@@ -150,4 +150,17 @@ The syntax of the **Atom** language is designed to be as simple as possible in o
 
 * **Jump labels:** Labels used for jumps are represented by a number at the beginning of a line followed by a colon (for example, `10:`).
 
-* **Comments:** Everything following the `;` character until the end of the line is ignored by the interpreter.
+* **Comments:** Everything following the `;` character until the end of the line is ignored by the interpreter. C-style comments are also supported: `//` for single-line comments and `/* ... */` for comments that may span multiple lines.
+
+* **Imports:** The `import` keyword on a line loads another `.mh` file and appends its instructions exactly at that position (relative paths are resolved against the importing file's directory). Imports may be nested:
+  ```
+  import "lib/math.mh"
+  import other_lib.mh
+  ```
+  Imported files are included in the AOT cache validation, so editing an imported file automatically invalidates the cached program.
+
+## 6. Building
+
+* **Default (C fallback):** `make` compiles `dist/atomc` using pure C arithmetic.
+* **Fortran support:** `make FORTAN=1` additionally builds `libatom_fortran.so` (the Fortran JIT module `src/arithmetics.f90`) and loads it at runtime. Without the flag, or if the `.so` is missing, the VM transparently falls back to the C implementation.
+* **Tests:** `make test` compiles the interpreter and runs the `.mh` test suite in `tests/mh/` via `tests/run_tests.sh`. Each `<name>.mh` has an optional `<name>.setup` (fixture reset) and `<name>.input` (stdin) plus a `<name>.expect` file listing expected output lines; lines prefixed with `~` are substring matches, all others must match a full line.

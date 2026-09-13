@@ -6,8 +6,6 @@
 #include <unistd.h>
 #endif
 
-// ============================================
-
 typedef enum {
     FILE_MODE_READ = 0,
     FILE_MODE_WRITE = 1,
@@ -420,13 +418,17 @@ void vm_execute(AtomVM *vm) {
                 if (inst.arg == 1) {
                     long addr = pop_number(vm);
                     if (addr >= 0 && addr < MEMORY_SIZE) {
-                        char buffer[256];
-                        printf("INPUT: ");
-                        fgets(buffer, sizeof(buffer), stdin);
-                        size_t len = strlen(buffer);
-                        if (len > 0 && buffer[len-1] == '\n') buffer[len-1] = '\0';
-                        strncpy((char*)&vm->memory[addr], buffer, 255);
-                        push_number(vm, addr);
+char buffer[256];
+                    printf("INPUT: ");
+                    if (!fgets(buffer, sizeof(buffer), stdin)) {
+                        buffer[0] = '\0';
+                    }
+                    size_t len = strlen(buffer);
+                    if (len > 0 && buffer[len-1] == '\n') buffer[len-1] = '\0';
+                    if (len > 255) len = 255;
+                    memcpy(&vm->memory[addr], buffer, len);
+                    vm->memory[addr + len] = '\0';
+                    push_number(vm, addr);
                     }
                 } else if (inst.arg == 2) {
                     long val = pop_number(vm);

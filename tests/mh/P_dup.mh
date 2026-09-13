@@ -1,0 +1,6 @@
+// P (Push/Duplicate) test
+D8
+P
+O    // 8
+O    // 8 again
+Q

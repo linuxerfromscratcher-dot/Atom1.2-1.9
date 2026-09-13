@@ -1,0 +1,6 @@
+// R (Register) test: write R7 then read it back
+D65
+R7
+R    // pushes r7
+O
+Q

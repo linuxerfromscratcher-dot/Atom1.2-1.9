@@ -4,6 +4,12 @@ AtomInstruction program[MAX_CODE_LEN];
 int program_length = 0;
 MhContainer current_mh;
 
+static char s_import_files[MAX_IMPORTS][256];
+static uint32_t s_import_checksums[MAX_IMPORTS];
+static int s_import_count = 0;
+
+#define MAX_IMPORT_DEPTH 32
+
 void ensure_cache_dir(void) {
 #ifdef _WIN32
     _mkdir(AOT_CACHE_DIR);
@@ -29,7 +35,11 @@ char* get_cache_path(const char *source_file) {
     }
     if (basename) basename++;
     else basename = source_file;
+#ifdef _WIN32
     snprintf(cache_path, sizeof(cache_path), "%s\\%s.aot", AOT_CACHE_DIR, basename);
+#else
+    snprintf(cache_path, sizeof(cache_path), "%s/%s.aot", AOT_CACHE_DIR, basename);
+#endif
     return cache_path;
 }
 
@@ -75,6 +85,21 @@ bool load_aot_cache(const char *source_file, AotCache *cache) {
         }
     }
     
+    for (int i = 0; i < cache->import_count && i < MAX_IMPORTS; i++) {
+        const char *import_path = cache->import_files[i];
+        if (compute_checksum(import_path) != cache->import_checksums[i]) {
+            printf("[AOT] Cache invalid (import changed): %s\n", import_path);
+            return false;
+        }
+        struct stat imp_stat;
+        if (stat(import_path, &imp_stat) == 0 && stat(cache_path, &cache_stat) == 0) {
+            if (imp_stat.st_mtime > cache_stat.st_mtime) {
+                printf("[AOT] Cache invalid (import newer): %s\n", import_path);
+                return false;
+            }
+        }
+    }
+    
     printf("[AOT] Cache loaded: %s (checksum: 0x%08X)\n", cache_path, cache->checksum);
     return true;
 }
@@ -101,6 +126,12 @@ void build_aot_cache(const char *source_file, AotCache *cache) {
     strncpy(cache->source_file, source_file, sizeof(cache->source_file) - 1);
     memcpy(cache->program, program, sizeof(AtomInstruction) * program_length);
     memcpy(&cache->container, &current_mh, sizeof(MhContainer));
+    cache->import_count = s_import_count;
+    for (int i = 0; i < s_import_count && i < MAX_IMPORTS; i++) {
+        strncpy(cache->import_files[i], s_import_files[i], 255);
+        cache->import_files[i][255] = '\0';
+        cache->import_checksums[i] = s_import_checksums[i];
+    }
 }
 
 static bool has_ref_colon(const char *p) {
@@ -116,41 +147,102 @@ static bool is_label_line(const char *p) {
     return *p == ':';
 }
 
-bool parse_atom_system(const char *filename) {
-    AotCache cache;
-    if (load_aot_cache(filename, &cache)) {
-        program_length = cache.program_length;
-        memcpy(program, cache.program, sizeof(AtomInstruction) * program_length);
-        memcpy(&current_mh, &cache.container, sizeof(MhContainer));
-        return true;
+static void strip_comments(char *line, bool *in_block_comment) {
+    char cleaned[MAX_LINE_LEN];
+    int j = 0;
+    for (int i = 0; line[i] != '\0'; i++) {
+        if (*in_block_comment) {
+            if (line[i] == '*' && line[i + 1] == '/') {
+                *in_block_comment = false;
+                i++;
+            }
+            continue;
+        }
+        if (line[i] == ';') break;
+        if (line[i] == '/' && line[i + 1] == '/') break;
+        if (line[i] == '/' && line[i + 1] == '*') {
+            *in_block_comment = true;
+            i++;
+            continue;
+        }
+        cleaned[j++] = line[i];
     }
-    
-    printf("[AOT] Compiling %s...\n", filename);
-    
-    FILE *file = fopen(filename, "r");
-    if (!file) {
-        fprintf(stderr, "[ERROR] Cannot open file: %s\n", filename);
+    cleaned[j] = '\0';
+    strcpy(line, cleaned);
+}
+
+static bool parse_lines(FILE *file, const char *dir, bool *in_block_comment, int depth);
+
+static bool parse_import(const char *dir, bool *in_block_comment, char *ptr, int depth) {
+    if (depth >= MAX_IMPORT_DEPTH) {
+        fprintf(stderr, "[ERROR] Import nesting too deep: %s\n", ptr);
         return false;
     }
 
+    ptr += 6;
+    while (*ptr && isspace((unsigned char)*ptr)) ptr++;
+
+    char name[256];
+    name[0] = '\0';
+    if (*ptr == '"') {
+        ptr++;
+        int i = 0;
+        while (*ptr && *ptr != '"' && i < 255) name[i++] = *ptr++;
+        name[i] = '\0';
+    } else {
+        int i = 0;
+        while (*ptr && !isspace((unsigned char)*ptr) && i < 255) name[i++] = *ptr++;
+        name[i] = '\0';
+    }
+    if (!*name) {
+        fprintf(stderr, "[ERROR] Empty import path\n");
+        return false;
+    }
+
+    char path[512];
+    if (name[0] == '/') {
+        snprintf(path, sizeof(path), "%s", name);
+    } else {
+        snprintf(path, sizeof(path), "%s/%s", dir, name);
+    }
+
+    FILE *imp = fopen(path, "r");
+    if (!imp) {
+        fprintf(stderr, "[ERROR] Cannot import: %s\n", path);
+        return false;
+    }
+
+    if (s_import_count < MAX_IMPORTS) {
+        strncpy(s_import_files[s_import_count], path, 255);
+        s_import_files[s_import_count][255] = '\0';
+        s_import_checksums[s_import_count] = compute_checksum(path);
+        s_import_count++;
+    }
+
+    char sub_dir[512];
+    const char *slash = strrchr(path, '/');
+    if (slash) snprintf(sub_dir, sizeof(sub_dir), "%.*s", (int)(slash - path), path);
+    else strcpy(sub_dir, ".");
+
+    bool ok = parse_lines(imp, sub_dir, in_block_comment, depth + 1);
+    fclose(imp);
+    return ok;
+}
+
+static bool parse_lines(FILE *file, const char *dir, bool *in_block_comment, int depth) {
     char line[MAX_LINE_LEN];
-    current_mh.stack_size = 0;
-    memset(current_mh.stack_context, 0, sizeof(current_mh.stack_context));
-    memset(current_mh.raw_bytes, 0, sizeof(current_mh.raw_bytes));
-    current_mh.raw_bytes_count = 0;
-    current_mh.sector_mapping = 0;
-    current_mh.target_address = 0;
-    current_mh.tiny_ram_fallback = false;
-    strcpy(current_mh.container_name, "");
-    program_length = 0;
-    
     while (fgets(line, sizeof(line), file)) {
-        char *comment = strchr(line, ';');
-        if (comment) *comment = '\0';
+        strip_comments(line, in_block_comment);
 
         char *ptr = line;
         while (*ptr && isspace((unsigned char)*ptr)) ptr++;
         if (!*ptr) continue;
+
+        if (strncmp(ptr, "import", 6) == 0 &&
+            (ptr[6] == '\0' || isspace((unsigned char)ptr[6]) || ptr[6] == '"')) {
+            if (!parse_import(dir, in_block_comment, ptr, depth)) return false;
+            continue;
+        }
 
         if (strncmp(ptr, "F/", 2) == 0) {
             char name[64];
@@ -289,7 +381,6 @@ bool parse_atom_system(const char *filename) {
                     program[program_length++] = (AtomInstruction){cmd, arg, sub_arg, has_arg};
                 } else {
                     fprintf(stderr, "[ERROR] Program too long!\n");
-                    fclose(file);
                     return false;
                 }
             } else {
@@ -297,8 +388,54 @@ bool parse_atom_system(const char *filename) {
             }
         }
     }
+    return true;
+}
 
+bool parse_atom_system(const char *filename) {
+    AotCache cache;
+    if (load_aot_cache(filename, &cache)) {
+        program_length = cache.program_length;
+        memcpy(program, cache.program, sizeof(AtomInstruction) * program_length);
+        memcpy(&current_mh, &cache.container, sizeof(MhContainer));
+        return true;
+    }
+    
+    printf("[AOT] Compiling %s...\n", filename);
+    
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        fprintf(stderr, "[ERROR] Cannot open file: %s\n", filename);
+        return false;
+    }
+
+    bool in_block_comment = false;
+    current_mh.stack_size = 0;
+    memset(current_mh.stack_context, 0, sizeof(current_mh.stack_context));
+    memset(current_mh.raw_bytes, 0, sizeof(current_mh.raw_bytes));
+    current_mh.raw_bytes_count = 0;
+    current_mh.sector_mapping = 0;
+    current_mh.target_address = 0;
+    current_mh.tiny_ram_fallback = false;
+    strcpy(current_mh.container_name, "");
+    program_length = 0;
+    s_import_count = 0;
+
+    const char *slash = strrchr(filename, '/');
+    char dir[512];
+    if (slash) {
+        snprintf(dir, sizeof(dir), "%.*s", (int)(slash - filename), filename);
+    } else {
+        strcpy(dir, ".");
+    }
+
+    bool ok = parse_lines(file, dir, &in_block_comment, 0);
     fclose(file);
+
+    if (!ok) return false;
+
+    if (in_block_comment) {
+        fprintf(stderr, "[WARNING] Unterminated /* comment in %s\n", filename);
+    }
     
     AotCache new_cache;
     build_aot_cache(filename, &new_cache);

@@ -1,0 +1,9 @@
+// F (File) test: open, read two bytes, close
+"rw.txt"
+F1   // open (r+) -> fd
+P    // dup fd for reuse
+F2 O // read 'A' = 65
+P    // dup fd
+F2 O // read 'B' = 66
+F4   // close
+Q

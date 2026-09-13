@@ -1,0 +1,5 @@
+// X (Logic) test: X1 AND, X2 OR, X3 XOR
+D12 D10 X1 O   // 12 & 10 = 8
+D12 D10 X2 O   // 12 | 10 = 14
+D12 D10 X3 O   // 12 ^ 10 = 6
+Q

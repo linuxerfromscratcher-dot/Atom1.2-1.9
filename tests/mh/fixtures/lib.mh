@@ -1,0 +1,3 @@
+// lib.mh — one level of import nesting
+import "base.mh"
+D5

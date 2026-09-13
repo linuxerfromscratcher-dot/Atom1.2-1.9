@@ -1,0 +1,6 @@
+// B (Branch) test: true and false paths
+// true:  2==2 -> 7
+D2 D2 C B1 D7 B2 D8 B3 O
+// false: 2==3 -> 8
+D2 D3 C B1 D9 B2 D8 B3 O
+Q

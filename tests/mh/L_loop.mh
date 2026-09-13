@@ -1,0 +1,14 @@
+// L (Loop) test: count down 3, 2, 1 then stop
+D3
+M5      // mem[5] = 3 counter
+L1
+D5 M    // read counter
+O       // print counter
+D5 M    // read counter
+D1 T2   // counter - 1
+M5      // write back
+D5 M    // read new counter
+D0 C    // new == 0 ?
+D1 X3   // invert: 1 while counter != 0
+L2      // continue while flag != 0
+Q

@@ -1,0 +1,8 @@
+// E (Execute) test: E pops target index, jumps to index target-1
+D1          // [0] filler
+D2          // [1] filler
+D5          // [2] target = 5 (executes index 4)
+E           // [3] E -> pc = 4
+D50         // [4] target instruction: push 50
+O           // [5] prints 50
+Q

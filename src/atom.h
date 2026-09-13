@@ -34,7 +34,8 @@
 #define MAX_CONTAINER_NAME 64
 #define AOT_CACHE_DIR ".atom_cache"
 #define AOT_MAGIC 0x41544F4D
-#define AOT_VERSION 0x00010002
+#define AOT_VERSION 0x00010003
+#define MAX_IMPORTS 64
 
 typedef enum {
     TYPE_NUMBER,
@@ -133,6 +134,9 @@ typedef struct {
     char source_file[256];
     AtomInstruction program[MAX_CODE_LEN];
     MhContainer container;
+    char import_files[MAX_IMPORTS][256];
+    uint32_t import_checksums[MAX_IMPORTS];
+    int import_count;
 } AotCache;
 extern AtomInstruction program[MAX_CODE_LEN];
 extern int program_length;
