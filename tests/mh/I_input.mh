@@ -1,5 +1,8 @@
-// I (Input) test: reads a line from stdin into memory@16
-D16 I1   // read "AB" into memory[16..17]
-D16 M O  // print 'A' = 65
-D17 M O  // print 'B' = 66
+// I (Input) test: I1 reads a line onto the stack, I2 into RAM[2], I3 into R7
+I1         // read "AB" -> stack
+O          // AB
+I2         // read "65" -> RAM[2]
+D2 M O     // 65
+I3         // read "7" -> R7
+G O        // 7
 Q

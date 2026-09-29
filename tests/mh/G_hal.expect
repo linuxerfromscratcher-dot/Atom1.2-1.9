@@ -1,0 +1,22 @@
+65
+-1
+-1
+-1
+-1
+-1
+-1
+-1
+-1
+-1
+-1
+~[HAL G7] RJ45 (INPHAL) -> 0x41 (65)
+~[HAL G1] SATA (INPHAL) input buffer empty
+~[HAL G2] COM_UART (INPHAL) input buffer empty
+~[HAL G3] USB (INPHAL) input buffer empty
+~[HAL G5] PS2 (INPHAL) input buffer empty
+~[HAL G8] AUDIO (INPHAL) input buffer empty
+~[HAL G9] LEGACY_RJ (INPHAL) input buffer empty
+~[HAL G10] RJ9 (INPHAL) input buffer empty
+~[HAL G11] RJ11 (INPHAL) input buffer empty
+~[HAL G12] RJ14 (INPHAL) input buffer empty
+~[HAL G13] RJ25 (INPHAL) input buffer empty

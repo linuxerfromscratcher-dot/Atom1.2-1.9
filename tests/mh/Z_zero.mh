@@ -1,7 +1,16 @@
-// Z (Zero) test: clears the stack
+// Z (ZERO): clears the stack, Z1 tests the top against zero
 D5
 D6
 Z
 D1
-O    // 1 (stack was cleared)
+O
+D0
+Z1
+O
+D5
+Z1
+O
+Z
+Z1
+O
 Q

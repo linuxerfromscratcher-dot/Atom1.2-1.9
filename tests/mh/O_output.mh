@@ -1,8 +1,6 @@
 // O (Output) test: number and /text/ string output
 D42 O
-D47 M16   // memory[16] = '/'
-D72 M17   // memory[17] = 'H'
-D73 M18   // memory[18] = 'I'
-D47 M19   // memory[19] = '/'
-D16 O     // prints /HI/
+H"ramlib.mh"
+E{poke_vga}   // memory[16..19] = /HI/
+D16 O         // prints /HI/
 Q

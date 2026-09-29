@@ -1,0 +1,9 @@
+77
+77
+3
+~[FFI] Alloc 16 bytes
+~[FFI] Store32 77
+~[FFI] Load8
+~[FFI] C string 'abc'
+~/\[FFI\] Symbol atom_peek8/
+~/\[FFI\] Symbol atom_strlen/

@@ -1,0 +1,6 @@
+#!/bin/sh
+if [ -f ../../libatom_fortran.so ]; then
+  exit 0
+fi
+echo "libatom_fortran.so is not built (make FORTAN=1)"
+exit 1

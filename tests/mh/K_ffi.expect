@@ -1,0 +1,14 @@
+42
+42
+-7
+48
+~/\[FFI\] Loaded: fixtures/libatomtestffi\.so \(handle 2\)/
+~[FFI] Symbol atom_sum
+~[FFI] Symbol atom_triple
+~[FFI] Symbol atom_negate
+~[FFI] Symbol atom_shift
+~/2 args\) -> 42/
+~/1 args\) -> 42/
+~/1 args\) -> -7/
+~/2 args\) -> 48/
+~/\[FFI\] Unloaded: fixtures\/libatomtestffi\.so/

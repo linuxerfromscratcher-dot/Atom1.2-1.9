@@ -1,4 +1,19 @@
-// G (Get) test: read from hardware ports
-G96 O    // port 0x60 -> 0x1F = 31
-G0 O     // default port 0 -> 0
+// G (GET_PORT): hardware port read, HAL input buffer, R7 fallback
+D1
+D1
+R7
+G
+O
+H"ramlib.mh"
+E{poke_hal5}
+G5
+O
+G5
+O
+G5
+O
+G4
+O
+G300
+O
 Q

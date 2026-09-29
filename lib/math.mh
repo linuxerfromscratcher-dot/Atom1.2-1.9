@@ -1,0 +1,94 @@
+// Atom standard library: math.mh
+// Include with H{math} or H"math.mh". Every :{name} block is a command
+// that is called with E(name) and returns at the Q that closes the block.
+// Stack contract of the commands below: one argument in, one result out.
+// Labels are numeric and global, so every command numbers its own range.
+
+:{greet}
+"Hello from the Atom standard library!"
+O
+D0
+Q
+:
+
+:{dbl}
+D2
+T3
+Q
+:
+
+:{square}
+P3
+T3
+Q
+:
+
+:{cube}
+P3
+P3
+T3
+T3
+Q
+:
+
+:{neg}
+D0
+D1
+T2
+X3
+D1
+T1
+Q
+:
+
+// 10: n == 1 -> return 1, else recurse and multiply
+:{fact}
+P3
+D1
+C
+J11(1)
+P3
+D1
+T2
+E{fact}
+T3
+11:
+Q
+:
+
+// 20: n == 1 -> return 1, else recurse and add
+:{sumto}
+P3
+D1
+C
+J21(1)
+P3
+D1
+T2
+E{sumto}
+T1
+21:
+Q
+:
+
+// 30: loop head, 31: exit. The counter lives in RAM byte 0, so the
+// command returns nothing and leaves the stack exactly as it found it.
+:{countdown}
+P3
+M0
+30:
+D0 M
+O
+D0 M
+D1 T2
+P3
+M0
+P2
+D0 M
+Z1
+J31(1)
+J30
+31:
+P2
+Q
+:

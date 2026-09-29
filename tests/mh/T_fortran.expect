@@ -1,0 +1,8 @@
+42
+42
+40
+~/\[FFI\] Loaded: .*libatom_fortran\.so/
+~[FFI] Symbol atom_add
+~[FFI] Symbol atom_mul
+~[FFI] Symbol atom_abs
+~[JIT] Fortran arithmetic module ready

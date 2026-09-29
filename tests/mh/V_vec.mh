@@ -1,5 +1,11 @@
-// V (Vector) test
+// V (VECTOR): bare V prints the table, V<int> installs a handler address,
+// V<int>"label" redirects a vector to a code label
+V
 D100
 V2
+11:
+D1
+O
+V2"11"
 V
 Q

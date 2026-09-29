@@ -1,0 +1,27 @@
+// K5 alloc, K6 cstr, K7 free, K8 store32, K9 load8
+D16
+K5
+P3
+D77
+K8
+K9
+O
+K1"fixtures/libatomtestffi.so"
+K2"atom_peek8"
+D16
+K5
+P3
+D77
+K8
+K3(1)
+O
+D8
+K5
+K7
+K1"fixtures/libatomtestffi.so"
+K2"atom_strlen"
+D4
+K6"abc"
+K3(1)
+O
+Q

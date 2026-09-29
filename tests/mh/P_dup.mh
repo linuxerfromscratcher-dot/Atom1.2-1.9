@@ -1,6 +1,18 @@
-// P (Push/Duplicate) test
+// P (PUSH/POP/DUP): P pushes, P1 pushes, P2 pops, P3 duplicates
 D8
 P
-O    // 8
-O    // 8 again
+O
+O
+P2
+P2
+O
+D8
+P1
+P1
+O
+O
+D7
+P3
+T1
+O
 Q

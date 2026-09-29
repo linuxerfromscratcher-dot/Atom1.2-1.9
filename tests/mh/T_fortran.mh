@@ -1,0 +1,21 @@
+// T through the Fortran JIT module: bind(c) symbols resolved with the FFI
+K1"libatom_fortran.so"
+K2"atom_add"
+D20
+D22
+K3(2)
+O
+K1"libatom_fortran.so"
+K2"atom_mul"
+D6
+D7
+K3(2)
+O
+K1"libatom_fortran.so"
+K2"atom_abs"
+D40
+K3(1)
+O
+K1"libatom_fortran.so"
+K4
+Q

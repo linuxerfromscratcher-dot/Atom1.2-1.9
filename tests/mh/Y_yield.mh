@@ -1,5 +1,6 @@
-// Y (Yield) test
+// Y (YIELD): bare Y yields, Y<n> switches context
 Y
 D1
 Y1
+Y2
 Q

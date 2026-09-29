@@ -1,6 +1,9 @@
-// U (Pack/Unpack) test
-D10 D20 U1 O   // (10<<16)|20 = 655380
-D655380 U2
-O              // low part: 20
-O              // high part: 10
+// U (Pack/Unpack) test: U1 writes an 8-byte record into RAM, U2 reads it
+// back and keeps a copy in the shadow buffer so the record cannot be lost
+D0x1234 D0x2000 D0x100
+U1
+O              // 0x100: record address
+D0x100 U2
+O              // 0x2000: size
+O              // 0x1234: cluster
 Q

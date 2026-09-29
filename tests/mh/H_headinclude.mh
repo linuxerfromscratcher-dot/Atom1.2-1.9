@@ -1,0 +1,8 @@
+// H (HEADINCLUDE): the library is linked at compile time, its commands are callable
+H{math}
+D7 E{square} O
+D5 E{fact} O
+D3 E{countdown}
+H"math.mh"
+D9 E{greet}
+Q

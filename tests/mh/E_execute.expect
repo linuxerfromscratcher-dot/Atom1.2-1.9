@@ -1,1 +1,9 @@
-50
+49
+27
+Hello from the Atom standard library!
+0
+-1
+~[EXEC] :square
+~[EXEC] :cube
+~[EXEC] :greet
+~EXEC needs a command name

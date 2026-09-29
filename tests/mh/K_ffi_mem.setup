@@ -1,0 +1,1 @@
+"${CC:-cc}" -O2 -shared -fPIC -o fixtures/libatomtestffi.so fixtures/native.c

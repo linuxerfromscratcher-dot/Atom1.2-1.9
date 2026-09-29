@@ -1,4 +1,6 @@
-// K (Kernel) test
+// K (SYS_CALL) test: bare K is an interrupt, K<n> is a kernel call
 K
-K1
+D1
+K12
+K10
 Q

@@ -1,0 +1,11 @@
+// W (NOPE): never blocks, never prints
+D1
+W2
+O
+W
+D2
+O
+W1 W3
+D3
+O
+Q

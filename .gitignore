@@ -8,3 +8,7 @@ dist/
 .atom_cache/
 .atom_cache*
 libatom_fortran.so
+!lib/*.mh
+tests/mh/fixtures/*.so
+tests/mh/rw.txt
+*.mod

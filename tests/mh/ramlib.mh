@@ -1,0 +1,43 @@
+// RAM helpers for the tests. M writes are allowed in .mh libraries only,
+// so tests reach RAM through these commands instead of writing inline.
+// A HAL window has its count byte at the window base and data from base+1.
+:{poke_hal5}
+D2
+M2048
+D65
+M2049
+D66
+M2050
+Q
+:
+
+:{poke_hal7}
+D1
+M2176
+D65
+M2177
+Q
+:
+
+:{poke_vga}
+D47
+M16
+D72
+M17
+D73
+M18
+D47
+M19
+Q
+:
+
+:{poke_lo}
+M16
+Q
+:
+
+:{peek16}
+D16
+M
+Q
+:

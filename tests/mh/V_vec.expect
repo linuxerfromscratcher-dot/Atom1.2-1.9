@@ -1,2 +1,4 @@
-~[VECTOR] Int 2 -> 100
-~[VECTOR] Configured.
+1
+~[VECTOR] Configured: 256 handlers
+~/\[VECTOR\] Int 2 -> 0x0064 at 0x0008/
+~/\[VECTOR\] Redirect: label 11 -> handler 2 at 0x0003/

@@ -1,0 +1,26 @@
+// K1 open library, K2 resolve symbol, K3(n) call, K4 close handle
+K1"fixtures/libatomtestffi.so"
+K2"atom_sum"
+D20
+D22
+K3(2)
+O
+K1"fixtures/libatomtestffi.so"
+K2"atom_triple"
+D14
+K3(1)
+O
+K1"fixtures/libatomtestffi.so"
+K2"atom_negate"
+D7
+K3(1)
+O
+K1"fixtures/libatomtestffi.so"
+K2"atom_shift"
+D3
+D4
+K3(2)
+O
+K1"fixtures/libatomtestffi.so"
+K4
+Q

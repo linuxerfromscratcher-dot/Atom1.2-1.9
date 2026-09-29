@@ -1,2 +1,4 @@
-~[KERNEL] Interrupt
-~[KERNEL] Syscall 1
+~[KERNEL] Interrupt at line 2
+~[KERNEL] Syscall 12 at line 4
+~[KERNEL] Syscall 10 at line 5
+!~/\[KERNEL\] Syscall 1$/

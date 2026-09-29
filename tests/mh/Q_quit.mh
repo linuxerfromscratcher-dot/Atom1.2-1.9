@@ -1,5 +1,0 @@
-// Q (Quit) test
-D1
-D2
-Q
-D99  // never reached

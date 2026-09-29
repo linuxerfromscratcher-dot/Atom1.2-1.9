@@ -1,2 +1,9 @@
-3
+1
 2
+3
+4
+~/\[JUMP\] to label 5 \(instruction 5\)$/
+~/\[JUMP\] to label 7 if true \(instruction 14\): not taken$/
+~/\[JUMP\] to label 9 \(instruction 16\)$/
+~/\[JUMP\] to label 11 if false \(instruction 23\): not taken$/
+~/\[JUMP\] to label 13 \(instruction 25\)$/
