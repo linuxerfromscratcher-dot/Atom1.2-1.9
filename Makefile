@@ -5,7 +5,7 @@ CFLAGS  = -Wall -Wextra -O2 -MMD -MP
 FFLAGS  = -Wall -O2 -fPIC
 SHARED_FFLAGS = -shared
 
-FORTAN ?= 1
+FORTAN ?= 0
 
 TARGET      = dist/atomc
 FORTRAN_LIB = libatom_fortran.so
@@ -56,6 +56,7 @@ build/%.o: src/%.f90
 
 test: $(TARGET)
 	bash tests/run_tests.sh
+	bash tests/run_native.sh
 
 clean:
 	rm -rf build dist $(TARGET) $(FORTRAN_LIB) *.mod tests/mh/fixtures/*.so

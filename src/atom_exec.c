@@ -699,18 +699,14 @@ void vm_execute(AtomVM *vm) {
 
             case 'M': {
                 if (inst.has_arg) {
-                    if (!code_file_is_library(inst.file_idx)) {
-                        fprintf(stderr, "[ERROR] Line %d: MEM write is allowed in .mh libraries only (%s)\n",
-                                inst.line, code_file_name(inst.file_idx));
-                        break;
-                    }
                     long value = pop_number(vm);
                     if (inst.arg < 0 || inst.arg >= MEMORY_SIZE) {
                         fprintf(stderr, "[ERROR] Line %d: MEM address %d out of range\n", inst.line, inst.arg);
                         break;
                     }
                     vm->memory[inst.arg] = (unsigned char)(value & 0xFF);
-                    printf("[MEM] Write 0x%02lX to 0x%04X\n", value & 0xFF, inst.arg);
+                    printf("[MEM] Write 0x%02lX to 0x%04X (%s)\n", value & 0xFF, inst.arg,
+                           code_file_name(inst.file_idx));
                 } else {
                     long addr = pop_number(vm);
                     if (addr < 0 || addr >= MEMORY_SIZE) {

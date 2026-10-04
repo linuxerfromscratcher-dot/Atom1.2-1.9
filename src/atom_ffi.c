@@ -6,7 +6,11 @@
 
 #if defined(__x86_64__) && !defined(_WIN32) && !defined(ATOM_USE_LIBFFI)
 #define ATOM_FFI_SYSV 1
+#define ATOM_ABI_STRICT_ALIGN 1
 #endif
+
+#include "atom_abi.h"
+
 
 static void *native_handle(void) {
 #ifdef _WIN32
@@ -157,16 +161,26 @@ void ffi_close(FfiState *ffi, int handle) {
     ffi->modules[handle - 1].path[0] = '\0';
 }
 
+static bool resolve_symbol(FfiState *ffi, int handle, const char *name, void **out, bool quiet);
+
+bool ffi_resolve_quiet(FfiState *ffi, int handle, const char *name, void **out) {
+    return resolve_symbol(ffi, handle, name, out, true);
+}
+
 bool ffi_resolve(FfiState *ffi, int handle, const char *name, void **out) {
+    return resolve_symbol(ffi, handle, name, out, false);
+}
+
+static bool resolve_symbol(FfiState *ffi, int handle, const char *name, void **out, bool quiet) {
     if (!name || !*name) {
-        fprintf(stderr, "[FFI] Error: empty symbol name\n");
+        if (!quiet) fprintf(stderr, "[FFI] Error: empty symbol name\n");
         return false;
     }
 
     void *lib = native_handle();
     if (handle != 0) {
         if (handle < 0 || handle > FFI_MAX_MODULES || !ffi->modules[handle - 1].loaded) {
-            fprintf(stderr, "[FFI] Error: invalid handle %d\n", handle);
+            if (!quiet) fprintf(stderr, "[FFI] Error: invalid handle %d\n", handle);
             return false;
         }
         lib = ffi->modules[handle - 1].handle;
@@ -181,7 +195,7 @@ bool ffi_resolve(FfiState *ffi, int handle, const char *name, void **out) {
 #endif
 
     if (!sym) {
-        fprintf(stderr, "[FFI] Error: symbol '%s' not found\n", name);
+        if (!quiet) fprintf(stderr, "[FFI] Error: symbol '%s' not found\n", name);
         return false;
     }
 
@@ -209,13 +223,13 @@ bool ffi_symbol_known(FfiState *ffi, void *sym) {
 }
 
 #ifdef ATOM_USE_LIBFFI
-bool ffi_call_long(FfiState *ffi, void *fn, const long *args, int nargs, long *result) {
+static bool call_word(FfiState *ffi, void *fn, const atom_word *args, int nargs, atom_word *result) {
     if (!fn || nargs < 0 || nargs > FFI_MAX_ARGS) return false;
 
     ffi_cif cif;
     ffi_type *atypes[FFI_MAX_ARGS];
     void *avalues[FFI_MAX_ARGS];
-    long slots[FFI_MAX_ARGS];
+    atom_word slots[FFI_MAX_ARGS];
 
     for (int i = 0; i < nargs; i++) {
         slots[i] = args[i];
@@ -228,14 +242,14 @@ bool ffi_call_long(FfiState *ffi, void *fn, const long *args, int nargs, long *r
         return false;
     }
 
-    long value = 0;
+    atom_word value = 0;
     ffi_call(&cif, FFI_FN(fn), &value, avalues);
     if (result) *result = value;
     ffi->calls++;
     return true;
 }
 #elif defined(ATOM_FFI_SYSV)
-bool ffi_call_long(FfiState *ffi, void *fn, const long *args, int nargs, long *result) {
+static bool call_word(FfiState *ffi, void *fn, const atom_word *args, int nargs, atom_word *result) {
     if (!fn) return false;
     if (nargs < 0 || nargs > 6) {
         fprintf(stderr, "[FFI] Error: the sysv64 backend supports 0..6 arguments, got %d\n", nargs);
@@ -243,14 +257,14 @@ bool ffi_call_long(FfiState *ffi, void *fn, const long *args, int nargs, long *r
     }
 
     struct {
-        long slots[6];
-        long count;
+        atom_word slots[6];
+        atom_word count;
         void *target;
-        long value;
+        atom_word value;
     } frame;
 
     for (int i = 0; i < 6; i++) frame.slots[i] = (i < nargs) ? args[i] : 0;
-    frame.count = nargs;
+    frame.count = (atom_word)nargs;
     frame.target = fn;
     frame.value = 0;
 
@@ -277,12 +291,52 @@ bool ffi_call_long(FfiState *ffi, void *fn, const long *args, int nargs, long *r
     return true;
 }
 #else
-bool ffi_call_long(FfiState *ffi, void *fn, const long *args, int nargs, long *result) {
+static bool call_word(FfiState *ffi, void *fn, const atom_word *args, int nargs, atom_word *result) {
     (void)fn; (void)args; (void)nargs; (void)result; (void)ffi;
     fprintf(stderr, "[FFI] Error: no call backend for this architecture\n");
     return false;
 }
 #endif
+
+bool ffi_call_long(FfiState *ffi, void *fn, const long *args, int nargs, long *result) {
+    if (nargs < 0 || nargs > FFI_MAX_ARGS) return false;
+
+    atom_word slots[FFI_MAX_ARGS];
+    for (int i = 0; i < nargs; i++) slots[i] = (atom_word)args[i];
+
+    atom_word value = 0;
+    if (!call_word(ffi, fn, slots, nargs, &value)) return false;
+    if (result) *result = (long)value;
+    return true;
+}
+
+bool ffi_call_ptr(FfiState *ffi, void *fn, void *ptr, long *result) {
+    atom_word slots[1];
+    slots[0] = (atom_word)(uintptr_t)ptr;
+
+    atom_word value = 0;
+    if (!call_word(ffi, fn, slots, 1, &value)) return false;
+    if (result) *result = (long)value;
+    return true;
+}
+
+bool ffi_call_ptr_word(FfiState *ffi, void *fn, void *ptr, long count, long *result) {
+    atom_word slots[2];
+    slots[0] = (atom_word)(uintptr_t)ptr;
+    slots[1] = (atom_word)count;
+
+    atom_word value = 0;
+    if (!call_word(ffi, fn, slots, 2, &value)) return false;
+    if (result) *result = (long)value;
+    return true;
+}
+
+bool ffi_call_void(FfiState *ffi, void *fn, long *result) {
+    atom_word value = 0;
+    if (!call_word(ffi, fn, NULL, 0, &value)) return false;
+    if (result) *result = (long)value;
+    return true;
+}
 
 void *ffi_alloc(FfiState *ffi, long size) {
     FfiBlock *block = block_new(ffi, size);
@@ -353,4 +407,121 @@ long ffi_load32(FfiState *ffi, void *ptr) {
     uint32_t raw = 0;
     memcpy(&raw, ptr, sizeof(raw));
     return (long)raw;
+}
+
+bool ffi_abi_check(FfiState *ffi, int handle, bool verbose) {
+    void *fn_word_size = NULL;
+    void *fn_pair_size = NULL;
+    void *fn_buffer_size = NULL;
+    void *fn_fill_pair = NULL;
+    void *fn_fill_buffer = NULL;
+    void *fn_fill_cells = NULL;
+
+    const struct {
+        const char *name;
+        void **slot;
+    } probes[] = {
+        {"atom_abi_word_size", &fn_word_size},
+        {"atom_abi_pair_size", &fn_pair_size},
+        {"atom_abi_buffer_size", &fn_buffer_size},
+        {"atom_abi_fill_pair", &fn_fill_pair},
+        {"atom_abi_fill_buffer", &fn_fill_buffer},
+        {"atom_abi_fill_cells", &fn_fill_cells},
+    };
+
+    for (size_t i = 0; i < sizeof(probes) / sizeof(probes[0]); i++) {
+        if (!ffi_resolve_quiet(ffi, handle, probes[i].name, probes[i].slot)) {
+            if (verbose) {
+                fprintf(stderr, "[ABI] module does not export %s\n", probes[i].name);
+            }
+            return false;
+        }
+    }
+
+    bool ok = true;
+
+    long reported = -1;
+    if (!ffi_call_void(ffi, fn_word_size, &reported)) ok = false;
+    else if (reported != ATOM_ABI_WORD_SIZE) {
+        fprintf(stderr, "[ABI] word width mismatch: C %d, module %ld\n",
+                ATOM_ABI_WORD_SIZE, reported);
+        ok = false;
+    } else if (verbose) {
+        printf("[ABI] word width %d bytes on both sides\n", ATOM_ABI_WORD_SIZE);
+    }
+
+    long pair_size = 0;
+    if (!ffi_call_void(ffi, fn_pair_size, &pair_size)) ok = false;
+    else if (pair_size != (long)sizeof(atom_pair)) {
+        fprintf(stderr, "[ABI] atom_pair size mismatch: C %zu, module %ld\n",
+                sizeof(atom_pair), pair_size);
+        ok = false;
+    }
+
+    long buffer_size = 0;
+    if (!ffi_call_void(ffi, fn_buffer_size, &buffer_size)) ok = false;
+    else if (buffer_size != (long)sizeof(atom_buffer)) {
+        fprintf(stderr, "[ABI] atom_buffer size mismatch: C %zu, module %ld\n",
+                sizeof(atom_buffer), buffer_size);
+        ok = false;
+    }
+
+    if (ok && verbose) {
+        printf("[ABI] shared records: atom_pair %zu bytes (offsets %zu/%zu), "
+               "atom_buffer %zu bytes (len at %zu)\n",
+               sizeof(atom_pair), offsetof(atom_pair, lo), offsetof(atom_pair, hi),
+               sizeof(atom_buffer), offsetof(atom_buffer, len));
+    }
+
+    if (ok) {
+        atom_pair pair;
+        memset(&pair, 0x5A, sizeof(pair));
+        ffi_call_ptr(ffi, fn_fill_pair, &pair, NULL);
+        if (pair.lo != 1111111111LL || pair.hi != 2222222222LL) {
+            fprintf(stderr, "[ABI] atom_pair layout mismatch: lo=%lld hi=%lld\n",
+                    (long long)pair.lo, (long long)pair.hi);
+            ok = false;
+        } else if (verbose) {
+            printf("[ABI] atom_pair offsets verified through the module\n");
+        }
+    }
+
+    if (ok) {
+        atom_buffer buffer;
+        memset(&buffer, 0x5A, sizeof(buffer));
+        ffi_call_ptr(ffi, fn_fill_buffer, &buffer, NULL);
+        if (buffer.data != NULL || buffer.len != 4242) {
+            fprintf(stderr, "[ABI] atom_buffer layout mismatch: data=%p len=%lld\n",
+                    buffer.data, (long long)buffer.len);
+            ok = false;
+        } else if (verbose) {
+            printf("[ABI] atom_buffer offsets verified through the module\n");
+        }
+    }
+
+    if (ok) {
+        atom_cell cells[4];
+        memset(cells, 0, sizeof(cells));
+        ffi_call_ptr_word(ffi, fn_fill_cells, cells, 4, NULL);
+        for (int row = 0; row < 4 && ok; row++) {
+            for (int col = 0; col < 4; col++) {
+                atom_word expect = (atom_word)(col * 1000 + row);
+                if (cells[row].words[col] != expect) {
+                    fprintf(stderr, "[ABI] array order mismatch at [%d][%d]: "
+                                    "got %lld, expected %lld\n",
+                            row, col, (long long)cells[row].words[col], (long long)expect);
+                    ok = false;
+                    break;
+                }
+            }
+        }
+        if (ok && verbose) {
+            printf("[ABI] array order verified: the module writes in the C buffer order\n");
+        }
+    }
+
+    if (ok && verbose) {
+        printf("[ABI] C and module agree on %s\n", atom_abi_tag_text());
+    }
+    return ok;
 }

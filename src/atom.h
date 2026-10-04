@@ -9,6 +9,8 @@
 #include <stdint.h>
 #include <time.h>
 
+#include "atom_abi.h"
+
 #ifdef _WIN32
     #include <direct.h>
     #include <io.h>
@@ -48,7 +50,7 @@
 #define FFI_MAX_SYMBOLS 64
 #define AOT_CACHE_DIR ".atom_cache"
 #define AOT_MAGIC 0x41544F4D
-#define AOT_VERSION 0x00030000
+#define AOT_VERSION 0x00040000
 #define PACK_RECORD_SIZE 8
 #define PACK_SHADOW_SIZE 256
 #define FORTRAN_LIB_NAME "libatom_fortran.so"
@@ -187,25 +189,30 @@ typedef struct {
     int pc;
 } AtomVM;
 
+unsigned char *pack_serialize_program(const char *source_file, size_t *out_size);
+bool pack_deserialize_program(const unsigned char *data, size_t size, bool verify,
+                              const char *source_file, const char *cache_path);
+
 typedef struct {
-    uint32_t magic;
-    uint32_t version;
-    uint32_t timestamp;
-    uint32_t checksum;
-    uint32_t program_length;
-    uint32_t name_count;
-    uint32_t word_count;
-    uint32_t label_count;
-    uint32_t lib_count;
-    uint32_t file_count;
-    uint32_t stack_size;
-    uint32_t raw_bytes_count;
-    uint32_t sector_mapping;
-    uint32_t target_address;
-    uint32_t tiny_ram_fallback;
-    char container_name[MAX_CONTAINER_NAME];
-    char source_file[256];
-} AotHeader;
+    unsigned char *data;
+    size_t size;
+    uint64_t platform_tag;
+    uint64_t abi_tag;
+    char source[256];
+} AtomNative;
+
+typedef enum {
+    NATIVE_NONE = 0,
+    NATIVE_READY = 1,
+    NATIVE_FAULT = -1
+} NativeState;
+
+bool atom_self_path(char *out, size_t size);
+NativeState native_open_self(AtomNative *img);
+bool native_restore(const AtomNative *img);
+bool native_compile(const char *exe, const char *source, const char *output);
+void native_info(const char *exe);
+void native_cleanup(AtomNative *img);
 
 extern AtomInstruction program[MAX_CODE_LEN];
 extern int program_length;
@@ -238,7 +245,6 @@ unsigned int compute_checksum(const char *filename);
 int intern_name(const char *name);
 const char *get_name(const AtomInstruction *inst);
 const char *code_file_name(int idx);
-bool code_file_is_library(int idx);
 int find_word(const char *name);
 bool define_word(const char *name, int start, int end, int library);
 void dump_program(void);
@@ -279,8 +285,13 @@ void ffi_cleanup(FfiState *ffi);
 bool ffi_open(FfiState *ffi, const char *path, int *handle, bool quiet);
 void ffi_close(FfiState *ffi, int handle);
 bool ffi_resolve(FfiState *ffi, int handle, const char *name, void **out);
+bool ffi_resolve_quiet(FfiState *ffi, int handle, const char *name, void **out);
 bool ffi_symbol_known(FfiState *ffi, void *sym);
 bool ffi_call_long(FfiState *ffi, void *fn, const long *args, int nargs, long *result);
+bool ffi_call_void(FfiState *ffi, void *fn, long *result);
+bool ffi_call_ptr(FfiState *ffi, void *fn, void *ptr, long *result);
+bool ffi_call_ptr_word(FfiState *ffi, void *fn, void *ptr, long count, long *result);
+bool ffi_abi_check(FfiState *ffi, int handle, bool verbose);
 void *ffi_alloc(FfiState *ffi, long size);
 void ffi_free(FfiState *ffi, void *ptr);
 char *ffi_cstr(FfiState *ffi, const char *text);

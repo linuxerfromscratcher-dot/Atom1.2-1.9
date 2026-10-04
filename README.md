@@ -72,7 +72,7 @@ Numbers, characters, strings and words are compared by value.
 
 Two backends are available and reported at startup: `libffi` when it is found by `pkg-config`, otherwise the built-in `sysv64` trampoline for x86-64 System V (up to 6 arguments). Windows uses `LoadLibraryA`/`GetProcAddress`.
 
-**M (Memory):** Full RAM access. Reading is universal, writing is only allowed inside `.mh` libraries. `D7 M16` writes 7 to `memory[16]`, `D16 M` reads it back.
+**M (Memory):** Full RAM access. Reading and writing are universal: any file, program or library may write a byte, only the address is clamped to the RAM window. `D7 M16` writes 7 to `memory[16]`, `D16 M` reads it back.
 
 **N (Next):** Increment — increases the value on the top of the stack by exactly 1.
 
@@ -168,11 +168,55 @@ Q
 
 Inside a block `Q` is a `RET`: the block ends and control comes back to `E{name}`. Outside of a block `Q` terminates the program and everything after it is deleted from the compiled code. The bundled library `lib/math.mh` provides `greet`, `dbl`, `square`, `cube`, `neg`, `fact`, `sumto` and `countdown` (the last one is an iterative loop that keeps its counter in RAM byte 0).
 
+# Native Binaries
+
+`atomc` can pack a program into a single native executable:
+
+```bash
+./dist/atomc -c program.mh -o program     # or --compile / -o
+./program                                  # no source file needed
+```
+
+The result is one self contained file: a byte for byte copy of the VM with the compiled program image appended and a 48 byte trailer at the end of the file.
+
+```
+[ VM image ][ payload header ][ source name ][ program image ][ trailer ]
+^ exe start                                ^ payload offset      ^ payload offset + size
+```
+
+* The platform is determined at pack time (`linux-x86_64-le-lp64`, `windows-aarch64-le-llp64`, …) and stored in the payload together with a fingerprint of the VM data layout. Both are checked before a single instruction runs, so a binary that was moved to another platform, or a VM that was rebuilt with a different layout, is refused with a clear message instead of decoding into shifted fields.
+* The payload is checksummed twice: a CRC over the payload and a CRC over the trailer. A damaged binary stops at startup.
+* `H` libraries are linked while packing, so the `.mh` file, the `.mh` libraries and the `.atom_cache/` directory can all be deleted afterwards.
+* `./dist/atomc --native-info` prints the platform, the ABI layout and the payload of the running VM; `--native-info <file>` inspects another binary.
+* Packing reads the VM image only, so a native binary can be repacked without nesting one binary inside another.
+
+## The C / Fortran ABI
+
+*`src/atom_abi.h` is the contract between the VM and every module loaded through the FFI.* Since C and Fortran handle memory allocation and array ordering differently, a layout that is not pinned down becomes quiet memory corruption instead of an error, so:
+
+* values cross the boundary as `atom_word` (`int64_t`) and `atom_index` (`int32_t`) only — `long` is 4 bytes on LLP64 targets and never reaches a foreign ABI, it is widened into an `atom_word` slot first;
+* every value argument is passed by value, pointers are the only by reference arguments and are passed through an `atom_word` slot, never through a `long`;
+* the shared records `atom_pair`, `atom_cell` and `atom_buffer` have their sizes and member offsets asserted at compile time on the C side and mirrored component by component with `bind(c)` in `src/arithmetics.f90`;
+* byte level access uses `memcpy()`, so no unaligned load can be generated;
+* a C buffer is never reinterpreted as a Fortran array: a 2D result is computed in Fortran order and copied cell by cell;
+* `ffi_abi_check()` verifies all of this at run time before the first value is passed — word width, record sizes, the offsets of the shared records and the element order of a buffer handed over by reference. A module that does not export the `atom_abi_*` probes, or that disagrees on any of them, is refused and the VM falls back to C arithmetic:
+
+```
+[ABI] word width 8 bytes on both sides
+[ABI] shared records: atom_pair 16 bytes (offsets 0/8), atom_buffer 16 bytes (len at 8)
+[ABI] atom_pair offsets verified through the module
+[ABI] atom_buffer offsets verified through the module
+[ABI] array order verified: the module writes in the C buffer order
+[ABI] C and module agree on w8/i4 pair16 cell32 buf16+8
+```
+
+The program image itself is serialised field by field, little endian, in `src/atom_pack.c`, and never as a raw struct dump: the same bytes are used for the AOT cache and for a native binary, so a stored image cannot bake this compiler's padding into a file.
+
 # Building
 
 * **Default:** `make` compiles `dist/atomc` and links the FFI against `libffi` when `pkg-config libffi` finds it, otherwise it uses the built-in x86-64 System V trampoline.
-* **Fortran support:** `FORTAN=1` (the default) additionally builds `libatom_fortran.so` from `src/arithmetics.f90` and loads it as a JIT module at startup, so `T1` … `T4` are executed by Fortran `bind(c)` functions through the FFI. `make FORTAN=0` skips it and the C implementation is used. A missing `.so` is not an error, the VM falls back to C.
-* **Tests:** `make test` compiles the interpreter and runs the `.mh` suite in `tests/mh/` via `tests/run_tests.sh`.
+* **Fortran support:** `FORTAN=1` builds `libatom_fortran.so` from `src/arithmetics.f90` and loads it as a JIT module at startup, so `T1` … `T4` are executed by Fortran `bind(c)` functions through the FFI. The module has to pass the ABI check described above first. `make FORTAN=0` skips it and the C implementation is used. A missing `.so` is not an error, the VM falls back to C.
+* **Tests:** `make test` compiles the interpreter, runs the `.mh` suite in `tests/mh/` via `tests/run_tests.sh` and the native binary suite via `tests/run_native.sh`.
   * `<name>.setup` — shell fixture reset, run before the program
   * `<name>.input` — stdin for the program
   * `<name>.guard` — optional executable guard; a non-zero exit skips the test and the script output becomes the reason

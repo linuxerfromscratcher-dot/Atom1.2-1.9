@@ -1,0 +1,14 @@
+// M (Memory) test: an ordinary program writes RAM bytes, no library needed.
+// Writing a byte is a normal instruction, only the address is clamped to RAM.
+D65 M16     // 'A' -> memory[16]
+D66 M17     // 'B' -> memory[17]
+D16 M
+O
+D17 M
+O
+D16 M
+O
+D65 M16
+D16 M
+O
+Q

@@ -1,5 +1,5 @@
-// RAM helpers for the tests. M writes are allowed in .mh libraries only,
-// so tests reach RAM through these commands instead of writing inline.
+// RAM helpers for the tests. Any file may write a RAM byte with M, these
+// commands only exist to keep the HAL tests readable.
 // A HAL window has its count byte at the window base and data from base+1.
 :{poke_hal5}
 D2

@@ -24,7 +24,6 @@ static bool s_in_library = false;
 static int s_file_idx = 0;
 static char s_paths[MAX_SEARCH_PATHS][512];
 static int s_path_count = 0;
-static bool s_aot_enabled = true;
 static bool s_trace = false;
 static bool s_overflow = false;
 
@@ -32,10 +31,6 @@ static bool parse_lines(FILE *file, const char *dir, bool *in_block_comment, int
 
 void set_trace_enabled(bool enabled) {
     s_trace = enabled;
-}
-
-void set_aot_enabled(bool enabled) {
-    s_aot_enabled = enabled;
 }
 
 void add_search_path(const char *path) {
@@ -97,14 +92,6 @@ void set_program_path(const char *self_path) {
 const char *code_file_name(int idx) {
     if (idx < 0 || idx >= code_file_count) return "?";
     return code_files[idx];
-}
-
-bool code_file_is_library(int idx) {
-    if (idx < 0 || idx >= code_file_count) return false;
-    for (int i = 0; i < code_lib_count; i++) {
-        if (strcmp(code_libs[i].path, code_files[idx]) == 0) return true;
-    }
-    return false;
 }
 
 int intern_name(const char *name) {
@@ -926,212 +913,6 @@ void dump_program(void) {
         printf("  library %s: %s (head=%d)\n",
                code_libs[i].name, code_libs[i].path, code_libs[i].head_include ? 1 : 0);
     }
-}
-
-void ensure_cache_dir(void) {
-#ifdef _WIN32
-    _mkdir(AOT_CACHE_DIR);
-#else
-    struct stat st;
-    if (stat(AOT_CACHE_DIR, &st) == -1) {
-        mkdir(AOT_CACHE_DIR, 0755);
-    }
-#endif
-}
-
-static void cache_path(const char *source_file, char *out, size_t size) {
-    const char *slash = strrchr(source_file, '/');
-    const char *bslash = strrchr(source_file, '\\');
-    const char *base = NULL;
-    if (slash && bslash) base = (slash > bslash) ? slash : bslash;
-    else if (slash) base = slash;
-    else if (bslash) base = bslash;
-    if (base) base++;
-    else base = source_file;
-#ifdef _WIN32
-    snprintf(out, size, "%s\\%s.aot", AOT_CACHE_DIR, base);
-#else
-    snprintf(out, size, "%s/%s.aot", AOT_CACHE_DIR, base);
-#endif
-}
-
-unsigned int compute_checksum(const char *filename) {
-    FILE *f = fopen(filename, "rb");
-    if (!f) return 0;
-    unsigned int checksum = 2166136261u;
-    int ch;
-    while ((ch = fgetc(f)) != EOF) {
-        checksum ^= (unsigned char)ch;
-        checksum *= 16777619u;
-    }
-    fclose(f);
-    return checksum;
-}
-
-bool load_aot_cache(const char *source_file) {    if (!s_aot_enabled) return false;
-
-    char path[512];
-    cache_path(source_file, path, sizeof(path));
-
-    FILE *f = fopen(path, "rb");
-    if (!f) return false;
-
-    AotHeader head;
-    if (fread(&head, sizeof(head), 1, f) != 1) {
-        fclose(f);
-        return false;
-    }
-
-    if (head.magic != AOT_MAGIC || head.version != AOT_VERSION) {
-        fclose(f);
-        return false;
-    }
-
-    if (head.checksum != compute_checksum(source_file)) {
-        printf("[AOT] Cache invalid (checksum mismatch), recompiling...\n");
-        fclose(f);
-        return false;
-    }
-
-    if (head.program_length > MAX_CODE_LEN || head.name_count > MAX_CODE_NAMES ||
-        head.word_count > MAX_WORDS || head.label_count > MAX_LABELS || head.lib_count > MAX_LIBS ||
-        head.file_count > MAX_LIBS || head.stack_size > STACK_SIZE ||
-        head.raw_bytes_count > (uint32_t)sizeof(current_mh.raw_bytes)) {
-        fclose(f);
-        return false;
-    }
-
-    struct stat src_stat, cache_stat;
-    if (stat(source_file, &src_stat) == 0 && stat(path, &cache_stat) == 0) {
-        if (src_stat.st_mtime > cache_stat.st_mtime) {
-            printf("[AOT] Source newer than cache, recompiling...\n");
-            fclose(f);
-            return false;
-        }
-    }
-
-    LibraryRef libs[MAX_LIBS];
-    if (head.lib_count > 0 && fread(libs, sizeof(LibraryRef), head.lib_count, f) != head.lib_count) {
-        fclose(f);
-        return false;
-    }
-    for (uint32_t i = 0; i < head.lib_count; i++) {
-        if (compute_checksum(libs[i].path) != libs[i].checksum) {
-            printf("[AOT] Cache invalid (library changed): %s\n", libs[i].path);
-            fclose(f);
-            return false;
-        }
-        struct stat lib_stat;
-        if (stat(libs[i].path, &lib_stat) == 0 && src_stat.st_mtime > cache_stat.st_mtime) {
-            if (lib_stat.st_mtime > cache_stat.st_mtime) {
-                printf("[AOT] Cache invalid (library newer): %s\n", libs[i].path);
-                fclose(f);
-                return false;
-            }
-        }
-    }
-
-    reset_program();
-
-    program_length = (int)head.program_length;
-    code_name_count = (int)head.name_count;
-    code_word_count = (int)head.word_count;
-    code_label_count = (int)head.label_count;
-    code_lib_count = (int)head.lib_count;
-    code_file_count = (int)head.file_count;
-    current_mh.stack_size = (int)head.stack_size;
-    current_mh.raw_bytes_count = (int)head.raw_bytes_count;
-    current_mh.sector_mapping = (int)head.sector_mapping;
-    current_mh.target_address = (unsigned int)head.target_address;
-    current_mh.tiny_ram_fallback = head.tiny_ram_fallback != 0;
-    snprintf(current_mh.container_name, sizeof(current_mh.container_name), "%s", head.container_name);
-
-    if (program_length > 0 && fread(program, sizeof(AtomInstruction), program_length, f) != (size_t)program_length) {
-        fclose(f);
-        return false;
-    }
-    if (code_name_count > 0 && fread(code_names, MAX_WORD_LEN, code_name_count, f) != (size_t)code_name_count) {
-        fclose(f);
-        return false;
-    }
-    if (code_word_count > 0 && fread(code_words, sizeof(WordDefinition), code_word_count, f) != (size_t)code_word_count) {
-        fclose(f);
-        return false;
-    }
-    if (code_label_count > 0 && fread(code_labels, sizeof(CodeLabel), code_label_count, f) != (size_t)code_label_count) {
-        fclose(f);
-        return false;
-    }
-    if (code_file_count > 0 && fread(code_files, 256, code_file_count, f) != (size_t)code_file_count) {
-        fclose(f);
-        return false;
-    }
-    if (code_lib_count > 0) memcpy(code_libs, libs, sizeof(LibraryRef) * (size_t)code_lib_count);
-    for (int i = 0; i < code_lib_count; i++) code_libs[i].expanded = true;
-    if (current_mh.stack_size > 0 &&
-        fread(current_mh.stack_context, sizeof(StackItem), current_mh.stack_size, f) != (size_t)current_mh.stack_size) {
-        fclose(f);
-        return false;
-    }
-    if (current_mh.raw_bytes_count > 0 &&
-        fread(current_mh.raw_bytes, 1, current_mh.raw_bytes_count, f) != (size_t)current_mh.raw_bytes_count) {
-        fclose(f);
-        return false;
-    }
-
-    fclose(f);
-    printf("[AOT] Cache loaded: %s (checksum: 0x%08X)\n", path, head.checksum);
-    return true;
-}
-
-void save_aot_cache(const char *source_file) {
-    if (!s_aot_enabled) return;
-    ensure_cache_dir();
-
-    char path[512];
-    cache_path(source_file, path, sizeof(path));
-
-    FILE *f = fopen(path, "wb");
-    if (!f) {
-        fprintf(stderr, "[AOT] Warning: cannot write cache to %s\n", path);
-        return;
-    }
-
-    AotHeader head;
-    memset(&head, 0, sizeof(head));
-    head.magic = AOT_MAGIC;
-    head.version = AOT_VERSION;
-    head.timestamp = (uint32_t)time(NULL);
-    head.checksum = compute_checksum(source_file);
-    head.program_length = (uint32_t)program_length;
-    head.name_count = (uint32_t)code_name_count;
-    head.word_count = (uint32_t)code_word_count;
-    head.label_count = (uint32_t)code_label_count;
-    head.lib_count = (uint32_t)code_lib_count;
-    head.file_count = (uint32_t)code_file_count;
-    head.stack_size = (uint32_t)current_mh.stack_size;
-    head.raw_bytes_count = (uint32_t)current_mh.raw_bytes_count;
-    head.sector_mapping = (uint32_t)current_mh.sector_mapping;
-    head.target_address = current_mh.target_address;
-    head.tiny_ram_fallback = current_mh.tiny_ram_fallback ? 1 : 0;
-    snprintf(head.container_name, sizeof(head.container_name), "%s", current_mh.container_name);
-    snprintf(head.source_file, sizeof(head.source_file), "%s", source_file);
-
-    fwrite(&head, sizeof(head), 1, f);
-    if (code_lib_count > 0) fwrite(code_libs, sizeof(LibraryRef), code_lib_count, f);
-    if (program_length > 0) fwrite(program, sizeof(AtomInstruction), program_length, f);
-    if (code_name_count > 0) fwrite(code_names, MAX_WORD_LEN, code_name_count, f);
-    if (code_word_count > 0) fwrite(code_words, sizeof(WordDefinition), code_word_count, f);
-    if (code_label_count > 0) fwrite(code_labels, sizeof(CodeLabel), code_label_count, f);
-    if (code_file_count > 0) fwrite(code_files, 256, code_file_count, f);
-    if (current_mh.stack_size > 0) {
-        fwrite(current_mh.stack_context, sizeof(StackItem), current_mh.stack_size, f);
-    }
-    if (current_mh.raw_bytes_count > 0) {
-        fwrite(current_mh.raw_bytes, 1, current_mh.raw_bytes_count, f);
-    }
-    fclose(f);
-    printf("[AOT] Cache saved: %s\n", path);
 }
 
 bool parse_atom_system(const char *filename) {

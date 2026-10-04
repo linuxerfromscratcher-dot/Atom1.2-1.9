@@ -5,4 +5,10 @@
 ~[FFI] Symbol atom_add
 ~[FFI] Symbol atom_mul
 ~[FFI] Symbol atom_abs
-~[JIT] Fortran arithmetic module ready
+~/\[ABI\] word width 8 bytes on both sides/
+~/\[ABI\] shared records: atom_pair 16 bytes \(offsets 0\/8\), atom_buffer 16 bytes \(len at 8\)/
+~[ABI] atom_pair offsets verified through the module
+~[ABI] atom_buffer offsets verified through the module
+~[ABI] array order verified: the module writes in the C buffer order
+~/\[JIT\] Fortran arithmetic module ready/
+!does not match the VM ABI/

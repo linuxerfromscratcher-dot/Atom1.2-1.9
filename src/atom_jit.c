@@ -62,6 +62,16 @@ void jit_init(AtomVM *vm) {
         return;
     }
 
+    if (!ffi_abi_check(&vm->ffi, handle, true)) {
+        printf("[JIT] Fortran module does not match the VM ABI, using C arithmetic\n");
+        jit->enabled = false;
+        jit->sym_add = NULL;
+        jit->sym_sub = NULL;
+        jit->sym_mul = NULL;
+        jit->sym_div = NULL;
+        return;
+    }
+
     jit->enabled = true;
     printf("[JIT] Fortran arithmetic module ready: %s\n", jit->lib_path);
 }
